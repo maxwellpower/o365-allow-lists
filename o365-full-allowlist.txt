@@ -2,6 +2,7 @@
 ! Format: Adblock-style exception rules
 ! Source: Official Microsoft 365 endpoint web service (Worldwide instance)
 ! Each rule allows the domain and its subdomains
+! Last Updated: 2026-03-15
 
 @@||aadrm.com^
 @@||account.activedirectory.windowsazure.com^

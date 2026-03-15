@@ -11,6 +11,7 @@ import sys
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from typing import Iterable, Sequence
 
@@ -40,6 +41,7 @@ DOMAIN_RE = re.compile(
     r"(?:\.(?!-)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$"
 )
 RULE_RE = re.compile(r"^@@\|\|([a-z0-9.-]+)\^$")
+LAST_UPDATED_RE = re.compile(r"^! Last Updated: (\d{4}-\d{2}-\d{2})$")
 
 MINIMAL_DOMAINS = {
     "aadcdn.microsoftonline-p.com",
@@ -204,10 +206,23 @@ def is_ip_address(value: str) -> bool:
     return True
 
 
-def render_allowlist(domains: Iterable[str], header_lines: Sequence[str]) -> str:
+def render_allowlist(domains: Iterable[str], header_lines: Sequence[str], last_updated: str) -> str:
     rules = [f"@@||{domain}^" for domain in sorted(set(domains))]
-    lines = [f"! {line}" for line in header_lines]
+    lines = [f"! {line}" for line in header_lines] + [f"! Last Updated: {last_updated}"]
     return "\n".join(lines + [""] + rules) + "\n"
+
+
+def extract_last_updated(content: str) -> str | None:
+    for line in content.splitlines():
+        match = LAST_UPDATED_RE.fullmatch(line.strip())
+        if match:
+            return match.group(1)
+    return None
+
+
+def strip_last_updated(content: str) -> str:
+    lines = [line for line in content.splitlines() if not LAST_UPDATED_RE.fullmatch(line.strip())]
+    return "\n".join(lines) + "\n"
 
 
 def parse_rules(content: str) -> list[str]:
@@ -270,9 +285,19 @@ def metadata_content(version: str) -> str:
     return json.dumps(payload, indent=2) + "\n"
 
 
-def build_outputs(fetch_result: FetchResult) -> dict[str, str]:
-    outputs = {
-        "minimal": render_allowlist(
+def build_outputs(fetch_result: FetchResult, today: str | None = None) -> dict[str, str]:
+    today = today or date.today().isoformat()
+    existing_contents = {
+        name: path.read_text(encoding="utf-8") if path.exists() else ""
+        for name, path in LIST_SPECS.items()
+    }
+    existing_dates = {
+        name: extract_last_updated(content) or today
+        for name, content in existing_contents.items()
+    }
+
+    base_outputs = {
+        "minimal": (
             MINIMAL_DOMAINS,
             [
                 'Microsoft 365 "minimal" allowlist for Pi-hole',
@@ -281,7 +306,7 @@ def build_outputs(fetch_result: FetchResult) -> dict[str, str]:
                 "Format: Adblock exception rules",
             ],
         ),
-        "sane": render_allowlist(
+        "sane": (
             SANE_DOMAINS,
             [
                 'Microsoft 365 "sane" allowlist for Pi-hole',
@@ -290,7 +315,7 @@ def build_outputs(fetch_result: FetchResult) -> dict[str, str]:
                 "Format: Adblock exception rules",
             ],
         ),
-        "full": render_allowlist(
+        "full": (
             fetch_result.domains,
             [
                 "Microsoft 365 / O365 max-compatibility allowlist for Pi-hole",
@@ -300,6 +325,18 @@ def build_outputs(fetch_result: FetchResult) -> dict[str, str]:
             ],
         ),
     }
+
+    outputs = {
+        name: render_allowlist(domains, header_lines, existing_dates[name])
+        for name, (domains, header_lines) in base_outputs.items()
+    }
+
+    for name, (domains, header_lines) in base_outputs.items():
+        existing = existing_contents[name]
+        candidate = outputs[name]
+        if strip_last_updated(existing) != strip_last_updated(candidate):
+            outputs[name] = render_allowlist(domains, header_lines, today)
+
     return outputs
 
 

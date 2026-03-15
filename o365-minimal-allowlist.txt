@@ -2,6 +2,7 @@
 ! Goal: allow login, identity, Outlook, and basic tenant routing only
 ! Best for desktop Office / Outlook setups where Teams, SharePoint, and OneDrive web features are not required
 ! Format: Adblock exception rules
+! Last Updated: 2026-03-15
 
 @@||aadcdn.microsoftonline-p.com^
 @@||aka.ms^

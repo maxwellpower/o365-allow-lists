@@ -2,6 +2,7 @@
 ! Goal: allow core Microsoft 365 functionality (login, Outlook, Teams, SharePoint, OneDrive)
 ! while avoiding broader telemetry/CDN domains where possible
 ! Format: Adblock exception rules
+! Last Updated: 2026-03-15
 
 @@||aadcdn.microsoftonline-p.com^
 @@||aka.ms^
