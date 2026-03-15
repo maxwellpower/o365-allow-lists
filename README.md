@@ -59,6 +59,13 @@ Scheduled and manual updater. Runs weekly and only commits when generated files 
 ### `.github/workflows/validate-o365-lists.yml`
 CI validation for pushes and pull requests. Verifies tests and file integrity without depending on a live upstream diff.
 
+### `addons/`
+Optional manually maintained sidecar allowlists that are not part of the automated Microsoft 365 update flow.
+
+Current examples:
+- `addons/okta-allowlist.txt` for a small Okta / Okta Verify compatibility sidecar
+- `addons/github-allowlist.txt` for conservative GitHub web/API/assets coverage
+
 ## Format
 
 All files use adblock-style exception syntax, for example:
@@ -83,6 +90,8 @@ Move to `o365-full-allowlist.txt` if something is still breaking and you want to
 - Microsoft continues moving services onto newer domains such as `cloud.microsoft`, so these lists will likely evolve over time.
 - The generator uses the official Microsoft 365 endpoint web service for the `Worldwide` instance with a stable `ClientRequestId`.
 - `minimal` and `sane` are intentionally hand-curated in code and are not widened automatically when Microsoft adds new endpoints.
+- Files under `addons/` are optional extras. They are maintained separately and are not modified by the O365 generator or scheduled updater.
+- The GitHub addon is intentionally conservative. It is meant to keep core GitHub usage working, not to cover every GitHub-adjacent service such as Actions, Packages, Codespaces, or Copilot.
 
 ## Automation
 

@@ -1,0 +1,12 @@
+! Okta allowlist for Pi-hole
+! Goal: Allow Okta Verify login, identity, and routing on mobile clients
+! Format: Adblock exception rules
+
+@@||okta.com^
+@@||oktacdn.com^
+@@||authenticatorlocalprod.com^
+@@||oktapreview.com^
+@@||okta-emea.com^
+@@||okta-gov.com^
+@@||okta.mil^
+@@||okta-featureflag-edge.azureedge.net^
